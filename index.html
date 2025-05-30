@@ -3,494 +3,342 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Jogo dos Graus Musicais</title>
+<title>Jogo de Graus Musicais</title>
 <style>
-  * {
-    box-sizing: border-box;
-  }
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;
+    color: #333;
     margin: 0;
-    padding: 0;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    color: white;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    overflow-x: hidden;
+    padding: 0 10px;
   }
-
-  @keyframes fadeSlideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
   h1 {
-    margin-top: 20px;
-    margin-bottom: 10px;
-    font-size: 2.5rem;
-    text-shadow: 1px 1px 3px #000;
-    user-select: none;
-    animation: fadeSlideDown 1s ease forwards;
-  }
-  #game-container {
-    background-color: #1f2933;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
-    max-width: 800px;
-    width: 95%;
     text-align: center;
-    display: flex;
-    gap: 30px;
-    justify-content: center;
-    align-items: flex-start;
-    opacity: 0;
-    animation: fadeSlideDown 1s ease 0.4s forwards;
+    color: #1a237e;
+    margin-top: 25px;
   }
-
-  #name-screen, #ranking-container {
-    background-color: #28343f;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: inset 0 0 10px #111;
+  #container {
+    max-width: 480px;
+    background: #fff;
+    margin: 25px auto 50px;
+    padding: 20px 25px 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(26,35,126,0.25);
   }
-
-  #name-screen {
-    flex: 1;
-    min-width: 260px;
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #0d47a1;
   }
-
-  #ranking-container {
-    flex: 1;
-    max-width: 300px;
-    color: #ccc;
+  input[type="text"], select {
+    width: 100%;
+    padding: 9px 12px;
     font-size: 1rem;
-    user-select: none;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #ranking-container h3 {
-    margin-top: 0;
+    border-radius: 6px;
+    border: 1.8px solid #ccc;
     margin-bottom: 15px;
-    color: #59a6ff;
+    box-sizing: border-box;
   }
-
-  #ranking-list {
-    list-style: decimal inside;
-    max-height: 320px;
-    overflow-y: auto;
-    padding-left: 0;
-    margin: 0;
-    flex-grow: 1;
-    scrollbar-width: thin;
-    scrollbar-color: #59a6ff #1f2933;
-    opacity: 1;
-    transition: opacity 0.5s ease;
-  }
-  #ranking-list.fade {
-    opacity: 0.3;
-  }
-  #ranking-list::-webkit-scrollbar {
-    width: 8px;
-  }
-  #ranking-list::-webkit-scrollbar-track {
-    background: #1f2933;
-    border-radius: 4px;
-  }
-  #ranking-list::-webkit-scrollbar-thumb {
-    background-color: #59a6ff;
-    border-radius: 4px;
-  }
-
-  #ranking-list li {
-    margin-bottom: 8px;
-  }
-
-  #start-screen, #game-screen, #end-screen {
-    margin-top: 30px;
-    background-color: #1f2933;
-    padding: 25px 30px;
-    border-radius: 20px;
-    max-width: 520px;
-    width: 95%;
-    box-shadow: 0 0 20px rgba(0,0,0,0.7);
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
-  #start-screen.show, #game-screen.show, #end-screen.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .btn {
-    padding: 12px 24px;
-    margin: 10px 5px;
-    font-size: 1.1rem;
+  button {
+    background-color: #0d47a1;
+    color: #fff;
     border: none;
-    border-radius: 12px;
-    background-color: #3498db;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-    user-select: none;
-    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.4);
-  }
-  .btn:hover {
-    background-color: #2980b9;
-    transform: scale(1.07);
-    box-shadow: 0 6px 12px rgba(41, 128, 185, 0.6);
-  }
-  input {
-    padding: 12px;
-    font-size: 1.3rem;
+    padding: 12px 18px;
     border-radius: 8px;
-    border: none;
-    margin-top: 15px;
-    width: 85%;
-    text-align: center;
-    user-select: text;
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
-    box-shadow: 0 0 5px transparent;
-  }
-  input:focus {
-    outline: none;
-    box-shadow: 0 0 12px #3498db;
-    transform: scale(1.03);
-  }
-  .hidden {
-    display: none !important;
-  }
-  #result {
-    margin-top: 20px;
-    font-size: 1.6rem;
-    min-height: 2em;
-    user-select: none;
     font-weight: 700;
-    transition: color 0.6s ease;
+    font-size: 1.1rem;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover:not(:disabled) {
+    background-color: #1565c0;
+  }
+  button:disabled {
+    background-color: #8eacff;
+    cursor: default;
+  }
+  #jogo {
+    margin-top: 25px;
+    text-align: center;
+  }
+  #pergunta {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #1a237e;
   }
   #timer {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #ffcc00;
-    margin-top: 15px;
-    user-select: none;
+    font-weight: 700;
+    color: #0d47a1;
+    margin-bottom: 18px;
   }
-  #question {
-    font-size: 1.7rem;
+  #resultado {
+    margin: 15px 0 25px;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  #score {
     font-weight: 600;
-    user-select: none;
+    color: #0d47a1;
+    margin-bottom: 15px;
+  }
+  #records {
+    max-width: 480px;
+    background: #e3f2fd;
+    border-radius: 10px;
+    padding: 15px 20px;
+    color: #0d47a1;
+    margin: 15px auto 40px;
+    box-sizing: border-box;
+  }
+  #records h3 {
+    margin-top: 0;
+    text-align: center;
+  }
+  #records strong {
+    display: block;
+    margin-top: 12px;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #0d47a1;
+    padding-bottom: 4px;
   }
 
-  #btn-back-home {
-    background-color: #e74c3c;
-    margin-top: 20px;
-    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
-  }
-  #btn-back-home:hover {
-    background-color: #c0392b;
-    box-shadow: 0 6px 12px rgba(192, 57, 43, 0.6);
-  }
-
-  @media (max-width: 700px) {
-    #game-container {
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
+  /* Responsividade */
+  @media (max-width: 520px) {
+    #container, #records {
+      margin: 15px 5px 30px;
+      padding: 15px 18px 25px;
     }
-    #name-screen, #ranking-container {
-      max-width: 100%;
-      width: 100%;
-    }
-    #ranking-container {
-      max-height: 200px;
-      font-size: 0.9rem;
-    }
-  }
-  @media (max-width: 400px) {
-    h1 {
-      font-size: 1.8rem;
-      margin-top: 15px;
-    }
-    #start-screen, #game-screen, #end-screen {
-      padding: 20px 15px;
-      font-size: 0.9rem;
-    }
-    input {
-      font-size: 1.1rem;
-      width: 90%;
-      padding: 10px;
-    }
-    .btn {
+    button {
       font-size: 1rem;
-      padding: 10px 20px;
-      margin: 8px 3px;
-    }
-    #question {
-      font-size: 1.3rem;
-    }
-    #timer {
-      font-size: 1.2rem;
-    }
-    #result {
-      font-size: 1.2rem;
+      padding: 10px 14px;
     }
   }
 </style>
 </head>
 <body>
-<h1>🎵 Jogo dos Graus Musicais</h1>
-<div id="game-container">
 
-  <!-- Tela para digitar nome -->
-  <div id="name-screen">
-    <p>Digite seu nome para começar:</p>
-    <input type="text" id="player-name" placeholder="Seu nome aqui" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" />
-    <button class="btn" id="btn-confirm-name">Confirmar</button>
+<h1>Jogo dos Graus Musicais</h1>
+
+<div id="container">
+  <label for="nome">Digite seu nome:</label>
+  <input type="text" id="nome" placeholder="Seu nome" />
+
+  <label for="modo">Escolha o modo:</label>
+  <select id="modo">
+    <option value="facil">Fácil (apenas graus maiores e menores do campo)</option>
+    <option value="medio">Médio (graus maiores, menores e com sustenido)</option>
+    <option value="dificil">Difícil (todos os graus maiores, menores, sustenidos e diminutos)</option>
+  </select>
+
+  <button id="btnComecar">Começar</button>
+
+  <div id="jogo" style="display:none;">
+    <div id="pergunta"></div>
+    <div id="timer"></div>
+    <input type="text" id="resposta" placeholder="Digite o acorde ex: D, Dm, G#m" autocomplete="off" />
+    <button id="btnEnviar">Enviar</button>
+
+    <div id="resultado"></div>
+    <div id="score"></div>
+    <button id="btnReiniciar" style="display:none;">Reiniciar</button>
   </div>
-
-  <!-- Ranking ao lado -->
-  <div id="ranking-container">
-    <h3>Ranking Geral</h3>
-    <ol id="ranking-list">
-      <li>Carregando...</li>
-    </ol>
-  </div>
-
 </div>
 
-<!-- Tela para escolher dificuldade -->
-<div id="start-screen" class="hidden">
-  <p>Escolha a dificuldade:</p>
-  <button class="btn" onclick="startGame('facil')">Fácil</button>
-  <button class="btn" onclick="startGame('medio')">Médio</button>
-  <button class="btn" onclick="startGame('dificil')">Difícil</button>
-</div>
-
-<!-- Tela do jogo -->
-<div id="game-screen" class="hidden">
-  <p id="question"></p>
-  <div id="timer">Tempo: 15s</div>
-  <input type="text" id="answer" placeholder="Digite sua resposta (ex: D, F#m, G#)..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
-  <button class="btn" onclick="checkAnswer()">Responder</button>
-  <button class="btn" id="btn-back-home">Voltar para o Início</button>
-  <p id="result"></p>
-</div>
-
-<!-- Tela de fim de jogo e ranking -->
-<div id="end-screen" class="hidden">
-  <p>Fim de jogo, <span id="display-player-name"></span>! Sua pontuação: <span id="final-score"></span></p>
-  <button class="btn" onclick="restartGame()">Reiniciar</button>
-</div>
+<div id="records"></div>
 
 <script>
-// Variáveis básicas do jogo
-let playerName = '';
-let score = 0;
-let difficulty = 'facil';
-let questionIndex = 0;
-let timerInterval;
-let timeLeft = 15;
+  // Dados musicais (campo harmônico maior com graus e acordes correspondentes)
+  // Graus: 1  2   3    4   5    6   7
+  // Maior: C  D   E    F   G    A   B
+  // Exemplo campo harmônico de D maior: D  Em  F#m  G  A  Bm  C#dim
 
-// Exemplo básico de perguntas para cada dificuldade
-const questions = {
-  facil: [
-    { question: 'Qual é o grau I na tonalidade de C?', answer: 'C' },
-    { question: 'Qual é o grau IV na tonalidade de G?', answer: 'C' },
-    { question: 'Qual é o grau V na tonalidade de D?', answer: 'A' }
-  ],
-  medio: [
-    { question: 'Qual é o grau ii na tonalidade de A?', answer: 'Bm' },
-    { question: 'Qual é o grau vi na tonalidade de E?', answer: 'C#m' },
-    { question: 'Qual é o grau iii na tonalidade de F?', answer: 'Am' }
-  ],
-  dificil: [
-    { question: 'Qual é o grau V7 na tonalidade de C?', answer: 'G7' },
-    { question: 'Qual é o grau vii° na tonalidade de D?', answer: 'C#dim' },
-    { question: 'Qual é o grau IV na tonalidade de Bb?', answer: 'Eb' }
-  ]
-};
+  const camposHarmonicos = {
+    C: ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim'],
+    D: ['D', 'Em', 'F#m', 'G', 'A', 'Bm', 'C#dim'],
+    E: ['E', 'F#m', 'G#m', 'A', 'B', 'C#m', 'D#dim'],
+    F: ['F', 'Gm', 'Am', 'Bb', 'C', 'Dm', 'Edim'],
+    G: ['G', 'Am', 'Bm', 'C', 'D', 'Em', 'F#dim'],
+    A: ['A', 'Bm', 'C#m', 'D', 'E', 'F#m', 'G#dim'],
+    B: ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m', 'A#dim'],
+  };
 
-// Ranking fake para exemplo, você pode integrar com Firebase depois
-let ranking = [
-  { name: 'Ana', score: 8 },
-  { name: 'Lucas', score: 7 },
-  { name: 'Maria', score: 6 },
-  { name: 'Pedro', score: 5 }
-];
+  const grausTexto = ['1º', '2º', '3º', '4º', '5º', '6º', '7º'];
 
-// Atualiza a lista do ranking na tela
-function updateRanking() {
-  const ol = document.getElementById('ranking-list');
-  ol.innerHTML = '';
-  // Ordena por score desc
-  ranking.sort((a,b) => b.score - a.score);
-  ranking.forEach(entry => {
-    const li = document.createElement('li');
-    li.textContent = `${entry.name} - ${entry.score} pontos`;
-    ol.appendChild(li);
+  let nomeJogador = "";
+  let modoAtual = "facil";
+  let pontos = 0;
+  let grauAtual;
+  let tomAtual;
+  let timer;
+  let tempoRestante;
+
+  const TEMPO_POR_PERGUNTA = 15;
+
+  const btnComecar = document.getElementById('btnComecar');
+  const btnEnviar = document.getElementById('btnEnviar');
+  const btnReiniciar = document.getElementById('btnReiniciar');
+  const inputNome = document.getElementById('nome');
+  const selectModo = document.getElementById('modo');
+  const divJogo = document.getElementById('jogo');
+  const perguntaDiv = document.getElementById('pergunta');
+  const inputResposta = document.getElementById('resposta');
+  const resultadoDiv = document.getElementById('resultado');
+  const scoreDiv = document.getElementById('score');
+  const timerDiv = document.getElementById('timer');
+  const recordsDiv = document.getElementById('records');
+
+  btnComecar.addEventListener('click', () => {
+    nomeJogador = inputNome.value.trim();
+    if (nomeJogador === "") {
+      alert("Por favor, digite seu nome!");
+      inputNome.focus();
+      return;
+    }
+    modoAtual = selectModo.value;
+    pontos = 0;
+    iniciarJogo();
   });
-}
 
-// Função para mudar de tela
-function showScreen(idToShow) {
-  const screens = ['name-screen', 'start-screen', 'game-screen', 'end-screen'];
-  screens.forEach(id => {
-    const el = document.getElementById(id);
-    if(id === idToShow) {
-      el.classList.remove('hidden');
-      // Forçar animação fade
-      setTimeout(() => el.classList.add('show'), 50);
+  btnEnviar.addEventListener('click', checarResposta);
+  inputResposta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') checarResposta();
+  });
+  btnReiniciar.addEventListener('click', () => {
+    pontos = 0;
+    resultadoDiv.textContent = "";
+    inputResposta.disabled = false;
+    btnReiniciar.style.display = "none";
+    inputResposta.value = "";
+    iniciarJogo();
+  });
+
+  function iniciarJogo() {
+    divJogo.style.display = 'block';
+    inputNome.disabled = true;
+    selectModo.disabled = true;
+    btnComecar.disabled = true;
+    scoreDiv.textContent = `Pontuação: ${pontos}`;
+    resultadoDiv.textContent = "";
+    proximaPergunta();
+  }
+
+  function proximaPergunta() {
+    clearInterval(timer);
+    inputResposta.value = "";
+    inputResposta.focus();
+
+    // Gera pergunta válida com base no modo e campo harmônico
+    // Modo fácil: só graus maiores e menores do campo harmônico (graus 1 a 6)
+    // Médio: graus maiores, menores e sustenidos (1 a 7, com sustenidos corretos)
+    // Difícil: todos os graus, inclusive diminutos no 7 grau
+
+    let grausValidos = [];
+    if (modoAtual === 'facil') {
+      grausValidos = [0,1,2,3,4,5]; // graus 1 a 6 (0 indexados)
+    } else if (modoAtual === 'medio') {
+      grausValidos = [0,1,2,3,4,5,6];
     } else {
-      el.classList.add('hidden');
-      el.classList.remove('show');
+      grausValidos = [0,1,2,3,4,5,6];
     }
-  });
-}
 
-// Confirmar nome e avançar para escolha de dificuldade
-document.getElementById('btn-confirm-name').onclick = () => {
-  const inputName = document.getElementById('player-name').value.trim();
-  if(inputName.length < 2) {
-    alert('Digite um nome válido com pelo menos 2 caracteres.');
-    return;
-  }
-  playerName = inputName;
-  showScreen('start-screen');
-};
+    // Escolhe tom aleatório do campo harmônico
+    const toms = Object.keys(camposHarmonicos);
+    tomAtual = toms[Math.floor(Math.random() * toms.length)];
 
-// Começa o jogo com dificuldade selecionada
-function startGame(level) {
-  difficulty = level;
-  score = 0;
-  questionIndex = 0;
-  showScreen('game-screen');
-  showQuestion();
-  startTimer();
-  document.getElementById('result').textContent = '';
-  document.getElementById('answer').value = '';
-  document.getElementById('answer').focus();
-  updateRanking(); // Atualiza ranking ao começar
-}
+    // Escolhe grau aleatório válido
+    grauAtual = grausValidos[Math.floor(Math.random() * grausValidos.length)];
 
-// Exibe a questão atual
-function showQuestion() {
-  const q = questions[difficulty][questionIndex];
-  document.getElementById('question').textContent = q.question;
-}
+    perguntaDiv.textContent = `Qual o acorde do ${grausTexto[grauAtual]} grau de ${tomAtual}?`;
 
-// Verifica a resposta e atualiza pontuação
-function checkAnswer() {
-  clearInterval(timerInterval);
-  const userAnswer = document.getElementById('answer').value.trim();
-  if(userAnswer.length === 0) {
-    alert('Digite uma resposta antes de enviar.');
-    startTimer();
-    return;
-  }
-  const correctAnswer = questions[difficulty][questionIndex].answer;
-  const result = document.getElementById('result');
-  
-  if(userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
-    score++;
-    result.style.color = '#2ecc71'; // verde
-    result.textContent = 'Resposta correta! 🎉';
-  } else {
-    result.style.color = '#e74c3c'; // vermelho
-    result.textContent = `Errado! A resposta correta era: ${correctAnswer}`;
-  }
-
-  questionIndex++;
-
-  if(questionIndex < questions[difficulty].length) {
-    setTimeout(() => {
-      document.getElementById('answer').value = '';
-      result.textContent = '';
-      showQuestion();
-      timeLeft = 15;
-      startTimer();
-      document.getElementById('answer').focus();
-    }, 1500);
-  } else {
-    setTimeout(() => {
-      endGame();
-    }, 1800);
-  }
-}
-
-// Temporizador da pergunta
-function startTimer() {
-  timeLeft = 15;
-  const timerEl = document.getElementById('timer');
-  timerEl.textContent = `Tempo: ${timeLeft}s`;
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    timerEl.textContent = `Tempo: ${timeLeft}s`;
-    if(timeLeft <= 0) {
-      clearInterval(timerInterval);
-      document.getElementById('result').style.color = '#e74c3c';
-      document.getElementById('result').textContent = `Tempo esgotado!`;
-      questionIndex++;
-      if(questionIndex < questions[difficulty].length) {
-        setTimeout(() => {
-          document.getElementById('answer').value = '';
-          document.getElementById('result').textContent = '';
-          showQuestion();
-          timeLeft = 15;
-          startTimer();
-          document.getElementById('answer').focus();
-        }, 1500);
-      } else {
-        setTimeout(() => {
-          endGame();
-        }, 1800);
+    tempoRestante = TEMPO_POR_PERGUNTA;
+    atualizarTimer();
+    timer = setInterval(() => {
+      tempoRestante--;
+      atualizarTimer();
+      if (tempoRestante <= 0) {
+        clearInterval(timer);
+        fimDeJogo("Tempo esgotado!");
       }
-    }
-  }, 1000);
-}
-
-// Finaliza o jogo e mostra tela final
-function endGame() {
-  clearInterval(timerInterval);
-  showScreen('end-screen');
-  document.getElementById('display-player-name').textContent = playerName;
-  document.getElementById('final-score').textContent = score;
-
-  // Atualiza ranking
-  ranking.push({name: playerName, score: score});
-  updateRanking();
-}
-
-// Reinicia para tela de nome
-function restartGame() {
-  playerName = '';
-  score = 0;
-  questionIndex = 0;
-  document.getElementById('player-name').value = '';
-  document.getElementById('result').textContent = '';
-  showScreen('name-screen');
-}
-
-// Botão voltar para início no jogo
-document.getElementById('btn-back-home').onclick = () => {
-  if(confirm('Deseja mesmo voltar para o início? Sua pontuação será perdida.')) {
-    restartGame();
+    }, 1000);
   }
-};
 
-// Inicializa
-updateRanking();
-showScreen('name-screen');
+  function atualizarTimer() {
+    timerDiv.textContent = `Tempo restante: ${tempoRestante}s`;
+  }
+
+  function normalizarResposta(resp) {
+    return resp.toLowerCase().replace(/\s/g,'');
+  }
+
+  function checarResposta() {
+    let respostaUsuario = inputResposta.value.trim();
+    if (!respostaUsuario) {
+      alert("Digite uma resposta antes de enviar!");
+      inputResposta.focus();
+      return;
+    }
+
+    clearInterval(timer);
+
+    const respostaCorreta = camposHarmonicos[tomAtual][grauAtual].toLowerCase();
+
+    // Normaliza para comparar (ignorar maiúsc/minúsc e espaços)
+    if (normalizarResposta(respostaUsuario) === normalizarResposta(respostaCorreta)) {
+      pontos++;
+      scoreDiv.textContent = `Pontuação: ${pontos}`;
+      resultadoDiv.style.color = "#1b5e20"; // verde escuro
+      resultadoDiv.textContent = "Correto! 🎉 +1 ponto";
+      proximaPergunta();
+    } else {
+      fimDeJogo(`Errado! A resposta correta era ${camposHarmonicos[tomAtual][grauAtual]}`);
+    }
+  }
+
+  function fimDeJogo(mensagem) {
+    clearInterval(timer);
+    resultadoDiv.style.color = "#b71c1c"; // vermelho escuro
+    resultadoDiv.textContent = mensagem + " Fim de jogo.";
+    scoreDiv.textContent = `Sua pontuação final: ${pontos}`;
+    inputResposta.disabled = true;
+    btnReiniciar.style.display = "block";
+    salvarRecorde();
+    mostrarRecordes();
+  }
+
+  // Salva e mostra os records no localStorage, mantendo top 5 por modo
+  function salvarRecorde() {
+    const registros = JSON.parse(localStorage.getItem("recordsMusicais") || "{}");
+    if (!registros[modoAtual]) registros[modoAtual] = [];
+    registros[modoAtual].push({ nome: nomeJogador, pontos });
+    registros[modoAtual].sort((a,b) => b.pontos - a.pontos);
+    registros[modoAtual] = registros[modoAtual].slice(0,5);
+    localStorage.setItem("recordsMusicais", JSON.stringify(registros));
+  }
+
+  function mostrarRecordes() {
+    const registros = JSON.parse(localStorage.getItem("recordsMusicais") || "{}");
+    let html = "<h3>Ranking - Top 5 por modo</h3>";
+    ["facil","medio","dificil"].forEach(modo => {
+      html += `<strong>${modo.charAt(0).toUpperCase()+modo.slice(1)}</strong><br/>`;
+      if (registros[modo] && registros[modo].length > 0) {
+        registros[modo].forEach((r,i) => {
+          html += `${i+1}. ${r.nome} - ${r.pontos} pts<br/>`;
+        });
+      } else {
+        html += `Nenhum recorde ainda.<br/>`;
+      }
+      html += "<br/>";
+    });
+    recordsDiv.innerHTML = html;
+  }
+
+  // Mostrar records ao carregar
+  mostrarRecordes();
+
 </script>
+
 </body>
 </html>
