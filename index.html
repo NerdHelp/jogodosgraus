@@ -284,7 +284,7 @@ function startGame(nivel) {
 function proximaPergunta() {
   clearInterval(timer);
   timeLeft = 15;
-  document.getElementById('timer').textContent = Tempo: ${timeLeft}s;
+  document.getElementById('timer').textContent = `Tempo: ${timeLeft}s`;
   grauAtual++;
   if ((dificuldade === 'facil' || dificuldade === 'medio') && grauAtual > 10) {
     fimDeJogo();
@@ -307,7 +307,7 @@ function geraTomAleatorio() {
 }
 
 function mostraPergunta(tom, grau) {
-  const texto = Qual é o acorde do grau ${grau} em ${tom}?;
+  const texto = `Qual é o acorde do grau ${grau} em ${tom}?`;
   document.getElementById('question').textContent = texto;
   const answerInput = document.getElementById('answer');
   answerInput.value = '';
@@ -320,7 +320,7 @@ function mostraPergunta(tom, grau) {
 function startTimer() {
   timer = setInterval(() => {
     timeLeft--;
-    document.getElementById('timer').textContent = Tempo: ${timeLeft}s;
+    document.getElementById('timer').textContent = `Tempo: ${timeLeft}s`;
     if (timeLeft <= 0) {
       clearInterval(timer);
       mostrarResultado(false, 'Tempo esgotado!');
@@ -358,7 +358,7 @@ function checkAnswer() {
     mostrarResultado(true, 'Acertou!');
   } else {
     sounds.erro.play();
-    mostrarResultado(false, Errou! Resposta correta: ${respostaCorreta});
+    mostrarResultado(false, `Errou! Resposta correta: ${respostaCorreta}`);
   }
 
   setTimeout(proximaPergunta, 1500);
@@ -404,7 +404,7 @@ document.getElementById('btn-back-home').onclick = () => {
 // Envia pontuação para o backend
 async function enviarPontuacao(nome, pontuacao) {
   try {
-    const res = await fetch(${API_URL}/submit-score, {
+    const res = await fetch(`${API_URL}/submit-score`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, pontuacao }),
@@ -421,7 +421,7 @@ async function enviarPontuacao(nome, pontuacao) {
 // Puxa ranking do backend
 async function carregarRanking() {
   try {
-    const res = await fetch(${API_URL}/ranking);
+    const res = await fetch(`${API_URL}/ranking`);
     const ranking = await res.json();
     const rankingList = document.getElementById('ranking-list');
     if (ranking.length === 0) {
@@ -429,7 +429,7 @@ async function carregarRanking() {
       return;
     }
     rankingList.innerHTML = ranking
-      .map((item, i) => <li><strong>${i + 1}º</strong> ${item.nome} - ${item.pontuacao} pts</li>)
+      .map((item, i) => `<li><strong>${i + 1}º</strong> ${item.nome} - ${item.pontuacao} pts</li>`)
       .join('');
   } catch (e) {
     console.warn('Erro ao carregar ranking:', e);
