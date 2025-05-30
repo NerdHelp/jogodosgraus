@@ -41,6 +41,7 @@
     align-items: flex-start;
   }
 
+  /* Contêineres laterais do nome e ranking */
   #name-screen, #ranking-container {
     background-color: #28343f;
     border-radius: 15px;
@@ -77,6 +78,7 @@
     margin-bottom: 8px;
   }
 
+  /* Tela do jogo e demais telas centralizadas abaixo */
   #start-screen, #game-screen, #end-screen {
     margin-top: 30px;
     background-color: #1f2933;
@@ -142,6 +144,7 @@
     user-select: none;
   }
 
+  /* Botão voltar aparece só durante o jogo */
   #btn-back-home {
     background-color: #e74c3c;
     margin-top: 20px;
@@ -150,6 +153,7 @@
     background-color: #c0392b;
   }
 
+  /* Responsividade: em telas pequenas, ranking fica abaixo do nome */
   @media (max-width: 700px) {
     #game-container {
       flex-direction: column;
@@ -162,41 +166,19 @@
     }
   }
 </style>
-
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-  import { getDatabase, ref, push, query, orderByChild, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAKoOfbQBtZ99hjm7xbTE2xcvQ_7KvA-vU",
-    authDomain: "graus-musicais.firebaseapp.com",
-    databaseURL: "https://graus-musicais-default-rtdb.firebaseio.com",
-    projectId: "graus-musicais",
-    storageBucket: "graus-musicais.firebasestorage.app",
-    messagingSenderId: "879525982702",
-    appId: "1:879525982702:web:a53688d50fa2ffc9809eff",
-    measurementId: "G-QPV6CH375K"
-  };
-
-  // Inicializa Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  window.firebaseRefs = { db, ref, push, query, orderByChild, limitToLast, onValue };
-</script>
-
 </head>
 <body>
 <h1>🎵 Jogo dos Graus Musicais</h1>
 <div id="game-container">
 
+  <!-- Tela para digitar nome -->
   <div id="name-screen">
     <p>Digite seu nome para começar:</p>
     <input type="text" id="player-name" placeholder="Seu nome aqui" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" />
     <button class="btn" id="btn-confirm-name">Confirmar</button>
   </div>
 
+  <!-- Ranking ao lado -->
   <div id="ranking-container">
     <h3>Ranking Geral</h3>
     <ol id="ranking-list">
@@ -206,6 +188,7 @@
 
 </div>
 
+<!-- Tela para escolher dificuldade -->
 <div id="start-screen" class="hidden">
   <p>Escolha a dificuldade:</p>
   <button class="btn" onclick="startGame('facil')">Fácil</button>
@@ -213,6 +196,7 @@
   <button class="btn" onclick="startGame('dificil')">Difícil</button>
 </div>
 
+<!-- Tela do jogo -->
 <div id="game-screen" class="hidden">
   <p id="question"></p>
   <div id="timer">Tempo: 15s</div>
@@ -222,220 +206,236 @@
   <p id="result"></p>
 </div>
 
+<!-- Tela de fim de jogo e ranking -->
 <div id="end-screen" class="hidden">
   <p>Fim de jogo, <span id="display-player-name"></span>! Sua pontuação: <span id="final-score"></span></p>
   <button class="btn" onclick="restartGame()">Reiniciar</button>
 </div>
 
 <script>
-  const { db, ref, push, query, orderByChild, limitToLast, onValue } = window.firebaseRefs;
+const sounds = {
+  acerto: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8A'),
+  erro: new Audio('data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8A'),
+  click: new Audio('data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YSQAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8A')
+};
 
-  const sounds = {
-    acerto: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8A'),
-    erro: new Audio('data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8A')
-  };
+const notasCompletas = {
+  'C': ['C', 'Dm', 'Em', 'F', 'G', 'Am'],
+  'D': ['D', 'Em', 'F#m', 'G', 'A', 'Bm'],
+  'E': ['E', 'F#m', 'G#m', 'A', 'B', 'C#m'],
+  'F': ['F', 'Gm', 'Am', 'Bb', 'C', 'Dm'],
+  'G': ['G', 'Am', 'Bm', 'C', 'D', 'Em'],
+  'A': ['A', 'Bm', 'C#m', 'D', 'E', 'F#m'],
+  'B': ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m']
+};
 
-  const grausMusicais = [
-    { grau: "I", nota: "C" },
-    { grau: "II", nota: "D" },
-    { grau: "III", nota: "E" },
-    { grau: "IV", nota: "F" },
-    { grau: "V", nota: "G" },
-    { grau: "VI", nota: "A" },
-    { grau: "VII", nota: "B" }
-  ];
+const escalaCompletaDificil = {
+  'C': ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim'],
+  'D': ['D', 'Em', 'F#m', 'G', 'A', 'Bm', 'C#dim'],
+  'E': ['E', 'F#m', 'G#m', 'A', 'B', 'C#m', 'D#dim'],
+  'F': ['F', 'Gm', 'Am', 'Bb', 'C', 'Dm', 'Edim'],
+  'G': ['G', 'Am', 'Bm', 'C', 'D', 'Em', 'F#dim'],
+  'A': ['A', 'Bm', 'C#m', 'D', 'E', 'F#m', 'G#dim'],
+  'B': ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m', 'A#dim']
+};
 
-  let playerName = '';
-  let score = 0;
-  let timerId = null;
-  let timeLeft = 15;
-  let currentQuestion = null;
-  let difficulty = 'facil';
+const grausFacilMedio = [1, 2, 3, 4, 5, 6];
+const grausDificil = [1, 2, 3, 4, 5, 6, 7];
 
-  const playerNameInput = document.getElementById('player-name');
-  const btnConfirmName = document.getElementById('btn-confirm-name');
-  const nameScreen = document.getElementById('name-screen');
-  const startScreen = document.getElementById('start-screen');
-  const gameScreen = document.getElementById('game-screen');
-  const endScreen = document.getElementById('end-screen');
-  const questionEl = document.getElementById('question');
-  const timerEl = document.getElementById('timer');
+const API_URL = 'http://localhost:3000'; // Troque pelo seu backend real
+
+let playerName = '';
+let dificuldade = '';
+let pontuacao = 0;
+let grauAtual = 0;
+let timer;
+let timeLeft = 15;
+let tomAtual = '';
+
+// Inicializa
+window.onload = () => {
+  carregarRanking();
+};
+
+document.getElementById('btn-confirm-name').onclick = () => {
+  const nomeInput = document.getElementById('player-name');
+  const nome = nomeInput.value.trim();
+  if (!nome) {
+    alert('Por favor, digite seu nome.');
+    nomeInput.focus();
+    return;
+  }
+  playerName = nome;
+  sounds.click.play();
+  document.getElementById('name-screen').classList.add('hidden');
+  document.getElementById('start-screen').classList.remove('hidden');
+};
+
+function startGame(nivel) {
+  dificuldade = nivel;
+  pontuacao = 0;
+  grauAtual = 0;
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('game-screen').classList.remove('hidden');
+  document.getElementById('result').textContent = '';
+  proximaPergunta();
+}
+
+function proximaPergunta() {
+  clearInterval(timer);
+  timeLeft = 15;
+  document.getElementById('timer').textContent = Tempo: ${timeLeft}s;
+  grauAtual++;
+  if ((dificuldade === 'facil' || dificuldade === 'medio') && grauAtual > 10) {
+    fimDeJogo();
+    return;
+  }
+  if (dificuldade === 'dificil' && grauAtual > 15) {
+    fimDeJogo();
+    return;
+  }
+  tomAtual = geraTomAleatorio();
+  const graus = dificuldade === 'dificil' ? grausDificil : grausFacilMedio;
+  const grauPergunta = graus[Math.floor(Math.random() * graus.length)];
+  mostraPergunta(tomAtual, grauPergunta);
+  startTimer();
+}
+
+function geraTomAleatorio() {
+  const tons = Object.keys(notasCompletas);
+  return tons[Math.floor(Math.random() * tons.length)];
+}
+
+function mostraPergunta(tom, grau) {
+  const texto = Qual é o acorde do grau ${grau} em ${tom}?;
+  document.getElementById('question').textContent = texto;
   const answerInput = document.getElementById('answer');
-  const resultEl = document.getElementById('result');
-  const finalScoreEl = document.getElementById('final-score');
-  const displayPlayerNameEl = document.getElementById('display-player-name');
-  const btnBackHome = document.getElementById('btn-back-home');
-  const rankingList = document.getElementById('ranking-list');
+  answerInput.value = '';
+  answerInput.dataset.grau = grau;
+  answerInput.dataset.tom = tom;
+  document.getElementById('result').textContent = '';
+  answerInput.focus();
+}
 
-  // Validação e confirmação do nome
-  btnConfirmName.onclick = () => {
-    const name = playerNameInput.value.trim();
-    if (name.length < 2) {
-      alert('Digite um nome válido com pelo menos 2 caracteres.');
-      playerNameInput.focus();
-      return;
+function startTimer() {
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').textContent = Tempo: ${timeLeft}s;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      mostrarResultado(false, 'Tempo esgotado!');
+      setTimeout(proximaPergunta, 1500);
     }
-    playerName = name;
-    nameScreen.classList.add('hidden');
-    startScreen.classList.remove('hidden');
-    carregarRanking();
-  };
+  }, 1000);
+}
 
-  btnBackHome.onclick = () => {
-    stopTimer();
-    resetGameState();
-    gameScreen.classList.add('hidden');
-    startScreen.classList.remove('hidden');
-    resultEl.textContent = '';
-    answerInput.value = '';
-  };
+function checkAnswer() {
+  clearInterval(timer);
+  const respostaInput = document.getElementById('answer');
+  const resposta = respostaInput.value.trim();
+  const grau = Number(respostaInput.dataset.grau);
+  const tom = respostaInput.dataset.tom;
 
-  function startGame(nivel) {
-    difficulty = nivel;
-    score = 0;
-    startScreen.classList.add('hidden');
-    gameScreen.classList.remove('hidden');
-    resultEl.textContent = '';
-    answerInput.value = '';
-    answerInput.focus();
-    proximaPergunta();
-  }
-
-  function proximaPergunta() {
-    resultEl.textContent = '';
-    answerInput.value = '';
-    timeLeft = difficulty === 'facil' ? 15 : difficulty === 'medio' ? 10 : 7;
-    timerEl.textContent = `Tempo: ${timeLeft}s`;
-
-    // Gerar pergunta (exemplo simplificado: perguntar qual grau corresponde a qual nota)
-    currentQuestion = gerarPergunta();
-    questionEl.textContent = `Qual é a nota do grau ${currentQuestion.grau}?`;
-
+  if (!resposta) {
+    alert('Digite sua resposta!');
     startTimer();
+    return;
   }
 
-  function gerarPergunta() {
-    // Para dificuldade maior, pode embaralhar notas mais complexas, por enquanto random simples:
-    const grausDisponiveis = grausMusicais;
-    const index = Math.floor(Math.random() * grausDisponiveis.length);
-    return grausDisponiveis[index];
+  let acordesPossiveis;
+  if (dificuldade === 'dificil') {
+    acordesPossiveis = escalaCompletaDificil[tom];
+  } else {
+    acordesPossiveis = notasCompletas[tom];
   }
 
-  function startTimer() {
-    stopTimer();
-    timerId = setInterval(() => {
-      timeLeft--;
-      timerEl.textContent = `Tempo: ${timeLeft}s`;
-      if (timeLeft <= 0) {
-        stopTimer();
-        mostrarResultado(false);
-      }
-    }, 1000);
+  const indiceEsperado = grau - 1;
+  const respostaCorreta = acordesPossiveis[indiceEsperado];
+
+  if (resposta.toLowerCase() === respostaCorreta.toLowerCase()) {
+    pontuacao++;
+    sounds.acerto.play();
+    mostrarResultado(true, 'Acertou!');
+  } else {
+    sounds.erro.play();
+    mostrarResultado(false, Errou! Resposta correta: ${respostaCorreta});
   }
 
-  function stopTimer() {
-    if (timerId) {
-      clearInterval(timerId);
-      timerId = null;
+  setTimeout(proximaPergunta, 1500);
+}
+
+function mostrarResultado(acertou, msg) {
+  const resultEl = document.getElementById('result');
+  resultEl.textContent = msg;
+  resultEl.style.color = acertou ? '#2ecc71' : '#e74c3c';
+}
+
+function fimDeJogo() {
+  clearInterval(timer);
+  document.getElementById('game-screen').classList.add('hidden');
+  document.getElementById('end-screen').classList.remove('hidden');
+  document.getElementById('final-score').textContent = pontuacao;
+  document.getElementById('display-player-name').textContent = playerName;
+  enviarPontuacao(playerName, pontuacao);
+  carregarRanking();
+}
+
+function restartGame() {
+  document.getElementById('end-screen').classList.add('hidden');
+  document.getElementById('name-screen').classList.remove('hidden');
+  pontuacao = 0;
+  grauAtual = 0;
+  playerName = '';
+  document.getElementById('player-name').value = '';
+}
+
+document.getElementById('btn-back-home').onclick = () => {
+  clearInterval(timer);
+  // Limpar campos e voltar para tela inicial
+  document.getElementById('game-screen').classList.add('hidden');
+  document.getElementById('name-screen').classList.remove('hidden');
+  pontuacao = 0;
+  grauAtual = 0;
+  playerName = '';
+  document.getElementById('player-name').value = '';
+  document.getElementById('result').textContent = '';
+};
+
+// Envia pontuação para o backend
+async function enviarPontuacao(nome, pontuacao) {
+  try {
+    const res = await fetch(${API_URL}/submit-score, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, pontuacao }),
+    });
+    const data = await res.json();
+    if (!data.sucesso) {
+      console.warn('Erro ao enviar pontuação:', data.error);
     }
+  } catch (e) {
+    console.warn('Falha na conexão com backend:', e);
   }
+}
 
-  function checkAnswer() {
-    const resposta = answerInput.value.trim();
-    if (!resposta) {
-      alert('Digite uma resposta!');
-      answerInput.focus();
+// Puxa ranking do backend
+async function carregarRanking() {
+  try {
+    const res = await fetch(${API_URL}/ranking);
+    const ranking = await res.json();
+    const rankingList = document.getElementById('ranking-list');
+    if (ranking.length === 0) {
+      rankingList.innerHTML = '<li>Nenhuma pontuação registrada ainda.</li>';
       return;
     }
-    stopTimer();
-    const correta = currentQuestion.nota.toLowerCase();
-    const dada = resposta.toLowerCase();
-    if (dada === correta) {
-      score++;
-      mostrarResultado(true);
-      sounds.acerto.play();
-    } else {
-      mostrarResultado(false);
-      sounds.erro.play();
-    }
+    rankingList.innerHTML = ranking
+      .map((item, i) => <li><strong>${i + 1}º</strong> ${item.nome} - ${item.pontuacao} pts</li>)
+      .join('');
+  } catch (e) {
+    console.warn('Erro ao carregar ranking:', e);
+    document.getElementById('ranking-list').innerHTML = '<li>Erro ao carregar ranking.</li>';
   }
-
-  function mostrarResultado(acertou) {
-    if (acertou) {
-      resultEl.style.color = '#4CAF50';
-      resultEl.textContent = 'Correto! 🎉';
-    } else {
-      resultEl.style.color = '#E74C3C';
-      resultEl.textContent = `Errado! A resposta correta era: ${currentQuestion.nota}`;
-    }
-    // Depois de 2s mostra próxima pergunta ou termina o jogo após 10 perguntas
-    setTimeout(() => {
-      if (score + (acertou ? 0 : 1) >= 10) {
-        fimDeJogo();
-      } else {
-        proximaPergunta();
-      }
-    }, 2000);
-  }
-
-  function fimDeJogo() {
-    gameScreen.classList.add('hidden');
-    endScreen.classList.remove('hidden');
-    displayPlayerNameEl.textContent = playerName;
-    finalScoreEl.textContent = score;
-
-    enviarPontuacao(playerName, score);
-    carregarRanking();
-  }
-
-  function restartGame() {
-    score = 0;
-    resultEl.textContent = '';
-    answerInput.value = '';
-    endScreen.classList.add('hidden');
-    startScreen.classList.remove('hidden');
-  }
-
-  function resetGameState() {
-    score = 0;
-    resultEl.textContent = '';
-    answerInput.value = '';
-    questionEl.textContent = '';
-    timerEl.textContent = '';
-  }
-
-  // Firebase: enviar pontuação
-  function enviarPontuacao(nome, pontos) {
-    const rankingsRef = ref(db, 'ranking/');
-    const novoRankingRef = push(rankingsRef);
-    novoRankingRef.set({
-      nome: nome,
-      pontos: pontos,
-      timestamp: Date.now()
-    });
-  }
-
-  // Firebase: carregar ranking
-  function carregarRanking() {
-    rankingList.innerHTML = '<li>Carregando...</li>';
-    const rankingsRef = query(ref(db, 'ranking'), orderByChild('pontos'), limitToLast(10));
-    onValue(rankingsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (!data) {
-        rankingList.innerHTML = '<li>Sem dados no ranking ainda.</li>';
-        return;
-      }
-      // Ordenar do maior para menor
-      const items = Object.values(data).sort((a,b) => b.pontos - a.pontos);
-      rankingList.innerHTML = '';
-      items.forEach(({ nome, pontos }) => {
-        const li = document.createElement('li');
-        li.textContent = `${nome}: ${pontos} ponto${pontos !== 1 ? 's' : ''}`;
-        rankingList.appendChild(li);
-      });
-    }, { onlyOnce: false });
-  }
+}
 </script>
-
 </body>
 </html>
