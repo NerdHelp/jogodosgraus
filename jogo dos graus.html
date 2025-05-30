@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jogo dos Graus Musicais</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  h1 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 2.5rem;
+    text-shadow: 1px 1px 3px #000;
+    user-select: none;
+  }
+  #game-container {
+    background-color: #1f2933;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+    max-width: 800px;
+    width: 95%;
+    text-align: center;
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  #name-screen, #ranking-container {
+    background-color: #28343f;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: inset 0 0 10px #111;
+  }
+
+  #name-screen {
+    flex: 1;
+    min-width: 260px;
+  }
+
+  #ranking-container {
+    flex: 1;
+    max-width: 300px;
+    color: #ccc;
+    font-size: 1rem;
+    user-select: none;
+  }
+
+  #ranking-container h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #59a6ff;
+  }
+
+  #ranking-list {
+    list-style: decimal inside;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-left: 0;
+  }
+  #ranking-list li {
+    margin-bottom: 8px;
+  }
+
+  #start-screen, #game-screen, #end-screen {
+    margin-top: 30px;
+    background-color: #1f2933;
+    padding: 25px 30px;
+    border-radius: 20px;
+    max-width: 520px;
+    width: 95%;
+    box-shadow: 0 0 20px rgba(0,0,0,0.7);
+  }
+
+  .btn {
+    padding: 12px 24px;
+    margin: 10px 5px;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 12px;
+    background-color: #3498db;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    user-select: none;
+  }
+  .btn:hover {
+    background-color: #2980b9;
+    transform: scale(1.05);
+  }
+  input {
+    padding: 12px;
+    font-size: 1.3rem;
+    border-radius: 8px;
+    border: none;
+    margin-top: 15px;
+    width: 85%;
+    text-align: center;
+    user-select: text;
+    transition: box-shadow 0.3s ease;
+  }
+  input:focus {
+    outline: none;
+    box-shadow: 0 0 8px #3498db;
+  }
+  .hidden {
+    display: none;
+  }
+  #result {
+    margin-top: 20px;
+    font-size: 1.6rem;
+    min-height: 2em;
+    user-select: none;
+    font-weight: 700;
+    transition: color 0.4s ease;
+  }
+  #timer {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ffcc00;
+    margin-top: 15px;
+    user-select: none;
+  }
+  #question {
+    font-size: 1.7rem;
+    font-weight: 600;
+    user-select: none;
+  }
+
+  #btn-back-home {
+    background-color: #e74c3c;
+    margin-top: 20px;
+  }
+  #btn-back-home:hover {
+    background-color: #c0392b;
+  }
+
+  @media (max-width: 700px) {
+    #game-container {
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    #name-screen, #ranking-container {
+      max-width: 100%;
+      width: 100%;
+    }
+  }
+</style>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+  import { getDatabase, ref, push, query, orderByChild, limitToLast, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAKoOfbQBtZ99hjm7xbTE2xcvQ_7KvA-vU",
+    authDomain: "graus-musicais.firebaseapp.com",
+    databaseURL: "https://graus-musicais-default-rtdb.firebaseio.com",
+    projectId: "graus-musicais",
+    storageBucket: "graus-musicais.firebasestorage.app",
+    messagingSenderId: "879525982702",
+    appId: "1:879525982702:web:a53688d50fa2ffc9809eff",
+    measurementId: "G-QPV6CH375K"
+  };
+
+  // Inicializa Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  window.firebaseRefs = { db, ref, push, query, orderByChild, limitToLast, onValue };
+</script>
+
+</head>
+<body>
+<h1>🎵 Jogo dos Graus Musicais</h1>
+<div id="game-container">
+
+  <div id="name-screen">
+    <p>Digite seu nome para começar:</p>
+    <input type="text" id="player-name" placeholder="Seu nome aqui" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" />
+    <button class="btn" id="btn-confirm-name">Confirmar</button>
+  </div>
+
+  <div id="ranking-container">
+    <h3>Ranking Geral</h3>
+    <ol id="ranking-list">
+      <li>Carregando...</li>
+    </ol>
+  </div>
+
+</div>
+
+<div id="start-screen" class="hidden">
+  <p>Escolha a dificuldade:</p>
+  <button class="btn" onclick="startGame('facil')">Fácil</button>
+  <button class="btn" onclick="startGame('medio')">Médio</button>
+  <button class="btn" onclick="startGame('dificil')">Difícil</button>
+</div>
+
+<div id="game-screen" class="hidden">
+  <p id="question"></p>
+  <div id="timer">Tempo: 15s</div>
+  <input type="text" id="answer" placeholder="Digite sua resposta (ex: D, F#m, G#)..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
+  <button class="btn" onclick="checkAnswer()">Responder</button>
+  <button class="btn" id="btn-back-home">Voltar para o Início</button>
+  <p id="result"></p>
+</div>
+
+<div id="end-screen" class="hidden">
+  <p>Fim de jogo, <span id="display-player-name"></span>! Sua pontuação: <span id="final-score"></span></p>
+  <button class="btn" onclick="restartGame()">Reiniciar</button>
+</div>
+
+<script>
+  const { db, ref, push, query, orderByChild, limitToLast, onValue } = window.firebaseRefs;
+
+  const sounds = {
+    acerto: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8A'),
+    erro: new Audio('data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8A')
+  };
+
+  const grausMusicais = [
+    { grau: "I", nota: "C" },
+    { grau: "II", nota: "D" },
+    { grau: "III", nota: "E" },
+    { grau: "IV", nota: "F" },
+    { grau: "V", nota: "G" },
+    { grau: "VI", nota: "A" },
+    { grau: "VII", nota: "B" }
+  ];
+
+  let playerName = '';
+  let score = 0;
+  let timerId = null;
+  let timeLeft = 15;
+  let currentQuestion = null;
+  let difficulty = 'facil';
+
+  const playerNameInput = document.getElementById('player-name');
+  const btnConfirmName = document.getElementById('btn-confirm-name');
+  const nameScreen = document.getElementById('name-screen');
+  const startScreen = document.getElementById('start-screen');
+  const gameScreen = document.getElementById('game-screen');
+  const endScreen = document.getElementById('end-screen');
+  const questionEl = document.getElementById('question');
+  const timerEl = document.getElementById('timer');
+  const answerInput = document.getElementById('answer');
+  const resultEl = document.getElementById('result');
+  const finalScoreEl = document.getElementById('final-score');
+  const displayPlayerNameEl = document.getElementById('display-player-name');
+  const btnBackHome = document.getElementById('btn-back-home');
+  const rankingList = document.getElementById('ranking-list');
+
+  // Validação e confirmação do nome
+  btnConfirmName.onclick = () => {
+    const name = playerNameInput.value.trim();
+    if (name.length < 2) {
+      alert('Digite um nome válido com pelo menos 2 caracteres.');
+      playerNameInput.focus();
+      return;
+    }
+    playerName = name;
+    nameScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+    carregarRanking();
+  };
+
+  btnBackHome.onclick = () => {
+    stopTimer();
+    resetGameState();
+    gameScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+    resultEl.textContent = '';
+    answerInput.value = '';
+  };
+
+  function startGame(nivel) {
+    difficulty = nivel;
+    score = 0;
+    startScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+    resultEl.textContent = '';
+    answerInput.value = '';
+    answerInput.focus();
+    proximaPergunta();
+  }
+
+  function proximaPergunta() {
+    resultEl.textContent = '';
+    answerInput.value = '';
+    timeLeft = difficulty === 'facil' ? 15 : difficulty === 'medio' ? 10 : 7;
+    timerEl.textContent = `Tempo: ${timeLeft}s`;
+
+    // Gerar pergunta (exemplo simplificado: perguntar qual grau corresponde a qual nota)
+    currentQuestion = gerarPergunta();
+    questionEl.textContent = `Qual é a nota do grau ${currentQuestion.grau}?`;
+
+    startTimer();
+  }
+
+  function gerarPergunta() {
+    // Para dificuldade maior, pode embaralhar notas mais complexas, por enquanto random simples:
+    const grausDisponiveis = grausMusicais;
+    const index = Math.floor(Math.random() * grausDisponiveis.length);
+    return grausDisponiveis[index];
+  }
+
+  function startTimer() {
+    stopTimer();
+    timerId = setInterval(() => {
+      timeLeft--;
+      timerEl.textContent = `Tempo: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        stopTimer();
+        mostrarResultado(false);
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+  }
+
+  function checkAnswer() {
+    const resposta = answerInput.value.trim();
+    if (!resposta) {
+      alert('Digite uma resposta!');
+      answerInput.focus();
+      return;
+    }
+    stopTimer();
+    const correta = currentQuestion.nota.toLowerCase();
+    const dada = resposta.toLowerCase();
+    if (dada === correta) {
+      score++;
+      mostrarResultado(true);
+      sounds.acerto.play();
+    } else {
+      mostrarResultado(false);
+      sounds.erro.play();
+    }
+  }
+
+  function mostrarResultado(acertou) {
+    if (acertou) {
+      resultEl.style.color = '#4CAF50';
+      resultEl.textContent = 'Correto! 🎉';
+    } else {
+      resultEl.style.color = '#E74C3C';
+      resultEl.textContent = `Errado! A resposta correta era: ${currentQuestion.nota}`;
+    }
+    // Depois de 2s mostra próxima pergunta ou termina o jogo após 10 perguntas
+    setTimeout(() => {
+      if (score + (acertou ? 0 : 1) >= 10) {
+        fimDeJogo();
+      } else {
+        proximaPergunta();
+      }
+    }, 2000);
+  }
+
+  function fimDeJogo() {
+    gameScreen.classList.add('hidden');
+    endScreen.classList.remove('hidden');
+    displayPlayerNameEl.textContent = playerName;
+    finalScoreEl.textContent = score;
+
+    enviarPontuacao(playerName, score);
+    carregarRanking();
+  }
+
+  function restartGame() {
+    score = 0;
+    resultEl.textContent = '';
+    answerInput.value = '';
+    endScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+  }
+
+  function resetGameState() {
+    score = 0;
+    resultEl.textContent = '';
+    answerInput.value = '';
+    questionEl.textContent = '';
+    timerEl.textContent = '';
+  }
+
+  // Firebase: enviar pontuação
+  function enviarPontuacao(nome, pontos) {
+    const rankingsRef = ref(db, 'ranking/');
+    const novoRankingRef = push(rankingsRef);
+    novoRankingRef.set({
+      nome: nome,
+      pontos: pontos,
+      timestamp: Date.now()
+    });
+  }
+
+  // Firebase: carregar ranking
+  function carregarRanking() {
+    rankingList.innerHTML = '<li>Carregando...</li>';
+    const rankingsRef = query(ref(db, 'ranking'), orderByChild('pontos'), limitToLast(10));
+    onValue(rankingsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        rankingList.innerHTML = '<li>Sem dados no ranking ainda.</li>';
+        return;
+      }
+      // Ordenar do maior para menor
+      const items = Object.values(data).sort((a,b) => b.pontos - a.pontos);
+      rankingList.innerHTML = '';
+      items.forEach(({ nome, pontos }) => {
+        const li = document.createElement('li');
+        li.textContent = `${nome}: ${pontos} ponto${pontos !== 1 ? 's' : ''}`;
+        rankingList.appendChild(li);
+      });
+    }, { onlyOnce: false });
+  }
+</script>
+
+</body>
+</html>
