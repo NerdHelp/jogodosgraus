@@ -19,13 +19,27 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+    overflow-x: hidden;
   }
+
+  @keyframes fadeSlideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   h1 {
     margin-top: 20px;
     margin-bottom: 10px;
     font-size: 2.5rem;
     text-shadow: 1px 1px 3px #000;
     user-select: none;
+    animation: fadeSlideDown 1s ease forwards;
   }
   #game-container {
     background-color: #1f2933;
@@ -39,9 +53,10 @@
     gap: 30px;
     justify-content: center;
     align-items: flex-start;
+    opacity: 0;
+    animation: fadeSlideDown 1s ease 0.4s forwards;
   }
 
-  /* Contêineres laterais do nome e ranking */
   #name-screen, #ranking-container {
     background-color: #28343f;
     border-radius: 15px;
@@ -60,6 +75,8 @@
     color: #ccc;
     font-size: 1rem;
     user-select: none;
+    display: flex;
+    flex-direction: column;
   }
 
   #ranking-container h3 {
@@ -73,12 +90,32 @@
     max-height: 320px;
     overflow-y: auto;
     padding-left: 0;
+    margin: 0;
+    flex-grow: 1;
+    scrollbar-width: thin;
+    scrollbar-color: #59a6ff #1f2933;
+    opacity: 1;
+    transition: opacity 0.5s ease;
   }
+  #ranking-list.fade {
+    opacity: 0.3;
+  }
+  #ranking-list::-webkit-scrollbar {
+    width: 8px;
+  }
+  #ranking-list::-webkit-scrollbar-track {
+    background: #1f2933;
+    border-radius: 4px;
+  }
+  #ranking-list::-webkit-scrollbar-thumb {
+    background-color: #59a6ff;
+    border-radius: 4px;
+  }
+
   #ranking-list li {
     margin-bottom: 8px;
   }
 
-  /* Tela do jogo e demais telas centralizadas abaixo */
   #start-screen, #game-screen, #end-screen {
     margin-top: 30px;
     background-color: #1f2933;
@@ -87,6 +124,13 @@
     max-width: 520px;
     width: 95%;
     box-shadow: 0 0 20px rgba(0,0,0,0.7);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  #start-screen.show, #game-screen.show, #end-screen.show {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .btn {
@@ -98,12 +142,14 @@
     background-color: #3498db;
     color: white;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
     user-select: none;
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.4);
   }
   .btn:hover {
     background-color: #2980b9;
-    transform: scale(1.05);
+    transform: scale(1.07);
+    box-shadow: 0 6px 12px rgba(41, 128, 185, 0.6);
   }
   input {
     padding: 12px;
@@ -114,14 +160,16 @@
     width: 85%;
     text-align: center;
     user-select: text;
-    transition: box-shadow 0.3s ease;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 0 5px transparent;
   }
   input:focus {
     outline: none;
-    box-shadow: 0 0 8px #3498db;
+    box-shadow: 0 0 12px #3498db;
+    transform: scale(1.03);
   }
   .hidden {
-    display: none;
+    display: none !important;
   }
   #result {
     margin-top: 20px;
@@ -129,7 +177,7 @@
     min-height: 2em;
     user-select: none;
     font-weight: 700;
-    transition: color 0.4s ease;
+    transition: color 0.6s ease;
   }
   #timer {
     font-size: 1.5rem;
@@ -144,16 +192,16 @@
     user-select: none;
   }
 
-  /* Botão voltar aparece só durante o jogo */
   #btn-back-home {
     background-color: #e74c3c;
     margin-top: 20px;
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
   }
   #btn-back-home:hover {
     background-color: #c0392b;
+    box-shadow: 0 6px 12px rgba(192, 57, 43, 0.6);
   }
 
-  /* Responsividade: em telas pequenas, ranking fica abaixo do nome */
   @media (max-width: 700px) {
     #game-container {
       flex-direction: column;
@@ -163,6 +211,39 @@
     #name-screen, #ranking-container {
       max-width: 100%;
       width: 100%;
+    }
+    #ranking-container {
+      max-height: 200px;
+      font-size: 0.9rem;
+    }
+  }
+  @media (max-width: 400px) {
+    h1 {
+      font-size: 1.8rem;
+      margin-top: 15px;
+    }
+    #start-screen, #game-screen, #end-screen {
+      padding: 20px 15px;
+      font-size: 0.9rem;
+    }
+    input {
+      font-size: 1.1rem;
+      width: 90%;
+      padding: 10px;
+    }
+    .btn {
+      font-size: 1rem;
+      padding: 10px 20px;
+      margin: 8px 3px;
+    }
+    #question {
+      font-size: 1.3rem;
+    }
+    #timer {
+      font-size: 1.2rem;
+    }
+    #result {
+      font-size: 1.2rem;
     }
   }
 </style>
@@ -213,229 +294,203 @@
 </div>
 
 <script>
-const sounds = {
-  acerto: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8A'),
-  erro: new Audio('data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8A'),
-  click: new Audio('data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YSQAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8A')
-};
-
-const notasCompletas = {
-  'C': ['C', 'Dm', 'Em', 'F', 'G', 'Am'],
-  'D': ['D', 'Em', 'F#m', 'G', 'A', 'Bm'],
-  'E': ['E', 'F#m', 'G#m', 'A', 'B', 'C#m'],
-  'F': ['F', 'Gm', 'Am', 'Bb', 'C', 'Dm'],
-  'G': ['G', 'Am', 'Bm', 'C', 'D', 'Em'],
-  'A': ['A', 'Bm', 'C#m', 'D', 'E', 'F#m'],
-  'B': ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m']
-};
-
-const escalaCompletaDificil = {
-  'C': ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim'],
-  'D': ['D', 'Em', 'F#m', 'G', 'A', 'Bm', 'C#dim'],
-  'E': ['E', 'F#m', 'G#m', 'A', 'B', 'C#m', 'D#dim'],
-  'F': ['F', 'Gm', 'Am', 'Bb', 'C', 'Dm', 'Edim'],
-  'G': ['G', 'Am', 'Bm', 'C', 'D', 'Em', 'F#dim'],
-  'A': ['A', 'Bm', 'C#m', 'D', 'E', 'F#m', 'G#dim'],
-  'B': ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m', 'A#dim']
-};
-
-const grausFacilMedio = [1, 2, 3, 4, 5, 6];
-const grausDificil = [1, 2, 3, 4, 5, 6, 7];
-
-const API_URL = 'http://localhost:3000'; // Troque pelo seu backend real
-
+// Variáveis básicas do jogo
 let playerName = '';
-let dificuldade = '';
-let pontuacao = 0;
-let grauAtual = 0;
-let timer;
+let score = 0;
+let difficulty = 'facil';
+let questionIndex = 0;
+let timerInterval;
 let timeLeft = 15;
-let tomAtual = '';
 
-// Inicializa
-window.onload = () => {
-  carregarRanking();
+// Exemplo básico de perguntas para cada dificuldade
+const questions = {
+  facil: [
+    { question: 'Qual é o grau I na tonalidade de C?', answer: 'C' },
+    { question: 'Qual é o grau IV na tonalidade de G?', answer: 'C' },
+    { question: 'Qual é o grau V na tonalidade de D?', answer: 'A' }
+  ],
+  medio: [
+    { question: 'Qual é o grau ii na tonalidade de A?', answer: 'Bm' },
+    { question: 'Qual é o grau vi na tonalidade de E?', answer: 'C#m' },
+    { question: 'Qual é o grau iii na tonalidade de F?', answer: 'Am' }
+  ],
+  dificil: [
+    { question: 'Qual é o grau V7 na tonalidade de C?', answer: 'G7' },
+    { question: 'Qual é o grau vii° na tonalidade de D?', answer: 'C#dim' },
+    { question: 'Qual é o grau IV na tonalidade de Bb?', answer: 'Eb' }
+  ]
 };
 
+// Ranking fake para exemplo, você pode integrar com Firebase depois
+let ranking = [
+  { name: 'Ana', score: 8 },
+  { name: 'Lucas', score: 7 },
+  { name: 'Maria', score: 6 },
+  { name: 'Pedro', score: 5 }
+];
+
+// Atualiza a lista do ranking na tela
+function updateRanking() {
+  const ol = document.getElementById('ranking-list');
+  ol.innerHTML = '';
+  // Ordena por score desc
+  ranking.sort((a,b) => b.score - a.score);
+  ranking.forEach(entry => {
+    const li = document.createElement('li');
+    li.textContent = `${entry.name} - ${entry.score} pontos`;
+    ol.appendChild(li);
+  });
+}
+
+// Função para mudar de tela
+function showScreen(idToShow) {
+  const screens = ['name-screen', 'start-screen', 'game-screen', 'end-screen'];
+  screens.forEach(id => {
+    const el = document.getElementById(id);
+    if(id === idToShow) {
+      el.classList.remove('hidden');
+      // Forçar animação fade
+      setTimeout(() => el.classList.add('show'), 50);
+    } else {
+      el.classList.add('hidden');
+      el.classList.remove('show');
+    }
+  });
+}
+
+// Confirmar nome e avançar para escolha de dificuldade
 document.getElementById('btn-confirm-name').onclick = () => {
-  const nomeInput = document.getElementById('player-name');
-  const nome = nomeInput.value.trim();
-  if (!nome) {
-    alert('Por favor, digite seu nome.');
-    nomeInput.focus();
+  const inputName = document.getElementById('player-name').value.trim();
+  if(inputName.length < 2) {
+    alert('Digite um nome válido com pelo menos 2 caracteres.');
     return;
   }
-  playerName = nome;
-  sounds.click.play();
-  document.getElementById('name-screen').classList.add('hidden');
-  document.getElementById('start-screen').classList.remove('hidden');
+  playerName = inputName;
+  showScreen('start-screen');
 };
 
-function startGame(nivel) {
-  dificuldade = nivel;
-  pontuacao = 0;
-  grauAtual = 0;
-  document.getElementById('start-screen').classList.add('hidden');
-  document.getElementById('game-screen').classList.remove('hidden');
-  document.getElementById('result').textContent = '';
-  proximaPergunta();
-}
-
-function proximaPergunta() {
-  clearInterval(timer);
-  timeLeft = 15;
-  document.getElementById('timer').textContent = `Tempo: ${timeLeft}s`;
-  grauAtual++;
-  if ((dificuldade === 'facil' || dificuldade === 'medio') && grauAtual > 10) {
-    fimDeJogo();
-    return;
-  }
-  if (dificuldade === 'dificil' && grauAtual > 15) {
-    fimDeJogo();
-    return;
-  }
-  tomAtual = geraTomAleatorio();
-  const graus = dificuldade === 'dificil' ? grausDificil : grausFacilMedio;
-  const grauPergunta = graus[Math.floor(Math.random() * graus.length)];
-  mostraPergunta(tomAtual, grauPergunta);
+// Começa o jogo com dificuldade selecionada
+function startGame(level) {
+  difficulty = level;
+  score = 0;
+  questionIndex = 0;
+  showScreen('game-screen');
+  showQuestion();
   startTimer();
-}
-
-function geraTomAleatorio() {
-  const tons = Object.keys(notasCompletas);
-  return tons[Math.floor(Math.random() * tons.length)];
-}
-
-function mostraPergunta(tom, grau) {
-  const texto = `Qual é o acorde do grau ${grau} em ${tom}?`;
-  document.getElementById('question').textContent = texto;
-  const answerInput = document.getElementById('answer');
-  answerInput.value = '';
-  answerInput.dataset.grau = grau;
-  answerInput.dataset.tom = tom;
   document.getElementById('result').textContent = '';
-  answerInput.focus();
+  document.getElementById('answer').value = '';
+  document.getElementById('answer').focus();
+  updateRanking(); // Atualiza ranking ao começar
 }
 
+// Exibe a questão atual
+function showQuestion() {
+  const q = questions[difficulty][questionIndex];
+  document.getElementById('question').textContent = q.question;
+}
+
+// Verifica a resposta e atualiza pontuação
+function checkAnswer() {
+  clearInterval(timerInterval);
+  const userAnswer = document.getElementById('answer').value.trim();
+  if(userAnswer.length === 0) {
+    alert('Digite uma resposta antes de enviar.');
+    startTimer();
+    return;
+  }
+  const correctAnswer = questions[difficulty][questionIndex].answer;
+  const result = document.getElementById('result');
+  
+  if(userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+    score++;
+    result.style.color = '#2ecc71'; // verde
+    result.textContent = 'Resposta correta! 🎉';
+  } else {
+    result.style.color = '#e74c3c'; // vermelho
+    result.textContent = `Errado! A resposta correta era: ${correctAnswer}`;
+  }
+
+  questionIndex++;
+
+  if(questionIndex < questions[difficulty].length) {
+    setTimeout(() => {
+      document.getElementById('answer').value = '';
+      result.textContent = '';
+      showQuestion();
+      timeLeft = 15;
+      startTimer();
+      document.getElementById('answer').focus();
+    }, 1500);
+  } else {
+    setTimeout(() => {
+      endGame();
+    }, 1800);
+  }
+}
+
+// Temporizador da pergunta
 function startTimer() {
-  timer = setInterval(() => {
+  timeLeft = 15;
+  const timerEl = document.getElementById('timer');
+  timerEl.textContent = `Tempo: ${timeLeft}s`;
+  timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById('timer').textContent = `Tempo: ${timeLeft}s`;
-    if (timeLeft <= 0) {
-      clearInterval(timer);
-      mostrarResultado(false, 'Tempo esgotado!');
-      setTimeout(proximaPergunta, 1500);
+    timerEl.textContent = `Tempo: ${timeLeft}s`;
+    if(timeLeft <= 0) {
+      clearInterval(timerInterval);
+      document.getElementById('result').style.color = '#e74c3c';
+      document.getElementById('result').textContent = `Tempo esgotado!`;
+      questionIndex++;
+      if(questionIndex < questions[difficulty].length) {
+        setTimeout(() => {
+          document.getElementById('answer').value = '';
+          document.getElementById('result').textContent = '';
+          showQuestion();
+          timeLeft = 15;
+          startTimer();
+          document.getElementById('answer').focus();
+        }, 1500);
+      } else {
+        setTimeout(() => {
+          endGame();
+        }, 1800);
+      }
     }
   }, 1000);
 }
 
-function checkAnswer() {
-  clearInterval(timer);
-  const respostaInput = document.getElementById('answer');
-  const resposta = respostaInput.value.trim();
-  const grau = Number(respostaInput.dataset.grau);
-  const tom = respostaInput.dataset.tom;
-
-  if (!resposta) {
-    alert('Digite sua resposta!');
-    startTimer();
-    return;
-  }
-
-  let acordesPossiveis;
-  if (dificuldade === 'dificil') {
-    acordesPossiveis = escalaCompletaDificil[tom];
-  } else {
-    acordesPossiveis = notasCompletas[tom];
-  }
-
-  const indiceEsperado = grau - 1;
-  const respostaCorreta = acordesPossiveis[indiceEsperado];
-
-  if (resposta.toLowerCase() === respostaCorreta.toLowerCase()) {
-    pontuacao++;
-    sounds.acerto.play();
-    mostrarResultado(true, 'Acertou!');
-  } else {
-    sounds.erro.play();
-    mostrarResultado(false, `Errou! Resposta correta: ${respostaCorreta}`);
-  }
-
-  setTimeout(proximaPergunta, 1500);
-}
-
-function mostrarResultado(acertou, msg) {
-  const resultEl = document.getElementById('result');
-  resultEl.textContent = msg;
-  resultEl.style.color = acertou ? '#2ecc71' : '#e74c3c';
-}
-
-function fimDeJogo() {
-  clearInterval(timer);
-  document.getElementById('game-screen').classList.add('hidden');
-  document.getElementById('end-screen').classList.remove('hidden');
-  document.getElementById('final-score').textContent = pontuacao;
+// Finaliza o jogo e mostra tela final
+function endGame() {
+  clearInterval(timerInterval);
+  showScreen('end-screen');
   document.getElementById('display-player-name').textContent = playerName;
-  enviarPontuacao(playerName, pontuacao);
-  carregarRanking();
+  document.getElementById('final-score').textContent = score;
+
+  // Atualiza ranking
+  ranking.push({name: playerName, score: score});
+  updateRanking();
 }
 
+// Reinicia para tela de nome
 function restartGame() {
-  document.getElementById('end-screen').classList.add('hidden');
-  document.getElementById('name-screen').classList.remove('hidden');
-  pontuacao = 0;
-  grauAtual = 0;
   playerName = '';
-  document.getElementById('player-name').value = '';
-}
-
-document.getElementById('btn-back-home').onclick = () => {
-  clearInterval(timer);
-  // Limpar campos e voltar para tela inicial
-  document.getElementById('game-screen').classList.add('hidden');
-  document.getElementById('name-screen').classList.remove('hidden');
-  pontuacao = 0;
-  grauAtual = 0;
-  playerName = '';
+  score = 0;
+  questionIndex = 0;
   document.getElementById('player-name').value = '';
   document.getElementById('result').textContent = '';
+  showScreen('name-screen');
+}
+
+// Botão voltar para início no jogo
+document.getElementById('btn-back-home').onclick = () => {
+  if(confirm('Deseja mesmo voltar para o início? Sua pontuação será perdida.')) {
+    restartGame();
+  }
 };
 
-// Envia pontuação para o backend
-async function enviarPontuacao(nome, pontuacao) {
-  try {
-    const res = await fetch(`${API_URL}/submit-score`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, pontuacao }),
-    });
-    const data = await res.json();
-    if (!data.sucesso) {
-      console.warn('Erro ao enviar pontuação:', data.error);
-    }
-  } catch (e) {
-    console.warn('Falha na conexão com backend:', e);
-  }
-}
-
-// Puxa ranking do backend
-async function carregarRanking() {
-  try {
-    const res = await fetch(`${API_URL}/ranking`);
-    const ranking = await res.json();
-    const rankingList = document.getElementById('ranking-list');
-    if (ranking.length === 0) {
-      rankingList.innerHTML = '<li>Nenhuma pontuação registrada ainda.</li>';
-      return;
-    }
-    rankingList.innerHTML = ranking
-      .map((item, i) => `<li><strong>${i + 1}º</strong> ${item.nome} - ${item.pontuacao} pts</li>`)
-      .join('');
-  } catch (e) {
-    console.warn('Erro ao carregar ranking:', e);
-    document.getElementById('ranking-list').innerHTML = '<li>Erro ao carregar ranking.</li>';
-  }
-}
+// Inicializa
+updateRanking();
+showScreen('name-screen');
 </script>
 </body>
 </html>
